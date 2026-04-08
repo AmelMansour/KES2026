@@ -1,6 +1,5 @@
 # Hybrid Artificial Intelligence Framework for the Ambulance Routing Problem in Emergency Medical Systems
 
-Abstract
 The Ambulance Routing Problem (ARP) is a critical challenge in Emergency Medical Services (EMS), where mini-
 mizing response time, travel distance, and improving coverage are essential for saving lives. Traditional optimization
 methods often fail to capture the dynamic, stochastic, and priority-driven nature of real-world emergency systems.
@@ -14,5 +13,4 @@ agent is introduced to learn adaptive dispatch policies in a dynamic environment
 under uncertainty. A hybrid interaction loop combines NSGA-II and RL, ensuring both long-term optimality and short-
 term responsiveness. Experiments on large-scale real EMS datasets and OpenStreetMap road networks demonstrate
 that the proposed framework improves Pareto efficiency, reduces response time, and increases system robustness.
-Keywords: Ambulance Routing Problem; Emergency Medical Services; Hybrid Artificial Intelligence; NSGA-II; Reinforcement Learning;
-DQN; Multi-Objective Optimization; OpenStreetMap; Intelligent Transportation Systems
+
