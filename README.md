@@ -17,7 +17,7 @@ framework improves Pareto efficiency, reduces response time, and increases syste
 
 ⚙️ Methodology
 
-The proposed framework introduces an end-to-end pipeline for EMS optimization, integrating data-driven modeling, multi-objective optimization, and Deep Q-Network (DQN). As illustrated in Figure~\ref{fig:framework}, the system combines global planning with real-time decision-making.
+The proposed framework introduces an end-to-end pipeline for EMS optimization, integrating data-driven modeling, multi-objective optimization, and DQN. As illustrated in Figure~\ref{fig:framework}, the system combines global planning with real-time decision-making.
 
 * Data Preprocessing and Feature Engineering:  
 Raw EMS incident data are cleaned and transformed into structured features, including temporal attributes and priority levels derived from incident types.
