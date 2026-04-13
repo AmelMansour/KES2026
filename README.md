@@ -4,13 +4,41 @@ This project proposes a hybrid AI-driven optimization framework for solving the 
 
 ⚙️ Methodology
 
-The proposed framework integrates three components:
+\section{Hybrid AI-Driven Optimization Framework}
 
-Predictive AI module: estimates spatio-temporal incident demand and patient priority levels from historical EMS data
-NSGA-II evolutionary optimization: generates Pareto-optimal ambulance allocation and routing strategies by minimizing response time and priority-weighted cost
-Deep Q-Network (DQN) reinforcement learning: enables real-time adaptive dispatching in dynamic environments
+The proposed framework introduces an end-to-end pipeline for EMS optimization, integrating data-driven modeling, multi-objective optimization, and Deep Q-Network (DQN). As illustrated in Figure~\ref{fig:framework}, the system combines global planning with real-time decision-making.
 
-A closed-loop hybrid mechanism allows interaction between NSGA-II and DQN, where evolutionary solutions guide the RL state space and RL feedback refines decision-making over time.
+\begin{itemize}
+
+\item {Data Preprocessing and Feature Engineering:}  
+Raw EMS incident data are cleaned and transformed into structured features, including temporal attributes and priority levels derived from incident types.
+
+\item {Spatial Mapping and Graph Construction:}  
+The urban road network is modeled using OpenStreetMap via OSMnx, where nodes represent intersections and edges encode travel distance and time.
+
+\item {Scenario Sampling:}  
+Multiple demand scenarios (Small, Medium, Large) are generated to reflect varying levels of operational complexity.
+
+\item {Multi-objective Optimization (NSGA-II):}  
+An offline optimization phase determines initial ambulance positioning by minimizing total response time and priority-weighted response cost, producing a set of Pareto-optimal solutions.
+
+\item {Deep Q-Network (DQN) Environment:}  
+A simulation environment models system states including ambulance positions and incident locations for sequential decision-making.
+
+\item {DQN-based dispatch policy (DQN):}  
+A Deep Q-Network learns a dispatch policy by maximizing cumulative rewards based on response efficiency.
+
+\item {Hybrid Integration:}  
+NSGA-II provides global optimal initialization, while RL enables adaptive real-time dispatch decisions, ensuring both exploration and responsiveness.
+
+\item {Simulation and Learning:}  
+A continuous interaction loop updates the RL policy through environment feedback.
+
+\item {Performance Evaluation:}  
+The framework is evaluated using Hypervolume, IGD, Spread, and computational runtime.
+
+\item Final Outcomes:
+Experimental results demonstrate significant improvements, including reduced response times, increased operational efficiency, and better coverage of high-risk areas, while maintaining stable learning behavior.
 
 <img width="1005" height="1044" alt="Capture d&#39;écran 2026-04-06 112703" src="https://github.com/user-attachments/assets/e30ebe36-be44-4e06-ab42-5a1856a689e2" />
 
