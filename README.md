@@ -4,11 +4,7 @@ This project proposes a hybrid AI-driven optimization framework for solving the 
 
 ⚙️ Methodology
 
-\section{Hybrid AI-Driven Optimization Framework}
-
 The proposed framework introduces an end-to-end pipeline for EMS optimization, integrating data-driven modeling, multi-objective optimization, and Deep Q-Network (DQN). As illustrated in Figure~\ref{fig:framework}, the system combines global planning with real-time decision-making.
-
-
 
 * Data Preprocessing and Feature Engineering:  
 Raw EMS incident data are cleaned and transformed into structured features, including temporal attributes and priority levels derived from incident types.
@@ -44,6 +40,19 @@ Experimental results demonstrate significant improvements, including reduced res
 
 
 📊 Experimental Results
+
+| Scenario | Method  | HV       | IGD      | Spread   | Runtime (s) |
+| -------- | ------- | -------- | -------- | -------- | ----------- |
+| Small    | NSGA-II | 0.047472 | 0.000000 | --       | 263.16      |
+| Small    | Hybrid  | 0.049845 | 0.000000 | --       | 266.76      |
+| Small    | RL      | --       | --       | --       | 3.59        |
+| Medium   | NSGA-II | 0.058565 | 0.003542 | 0.018212 | 1573.36     |
+| Medium   | Hybrid  | 0.061494 | 0.003187 | 0.018576 | 1576.65     |
+| Medium   | RL      | --       | --       | --       | 3.29        |
+| Large    | NSGA-II | 0.074215 | 0.017656 | 0.069426 | 3756.40     |
+| Large    | Hybrid  | 0.077926 | 0.015891 | 0.070814 | 3760.04     |
+| Large    | RL      | --       | --       | --       | 3.63        |
+
 
 Experiments were conducted on real EMS datasets and OpenStreetMap road networks across small, medium, and large-scale scenarios.
 
