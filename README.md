@@ -1,94 +1,86 @@
-# Hybrid Artificial Intelligence Framework for the Ambulance Routing Problem in Emergency Medical Systems
+# A Hybrid AI Framework Combining NSGA-II and Deep Q-Network for the Ambulance Routing Problem in Emergency Medical Services
 
-The Ambulance Routing Problem (ARP) is a critical challenge in Emergency Medical Services (EMS), where mini-
-mizing response time, travel distance, and improving coverage are essential for saving lives. Traditional optimization
-methods often fail to capture the dynamic, stochastic, and priority-driven nature of real-world emergency systems.
-In this paper, we propose a Hybrid EMS Optimization Framework combining Artificial Intelligence (AI), Multi-
-Objective Evolutionary Optimization, and Deep Q-Network (DQN) (RL). A predictive AI module estimates spatio-
-temporal incident probabilities and assigns dynamic priority levels based on historical EMS data. These predictions
-are used to construct risk-aware demand models and simulation scenarios.
-A Non-Dominated Sorting Genetic Algorithm II (NSGA-II) is employed to generate Pareto-optimal ambulance de-
-ployment and routing strategies, optimizing response time and priority-weighted response time. In parallel, a Deep
-Q-Network (DQN) agent is introduced to learn adaptive dispatch policies in a dynamic environment, enabling real-
-time decision-making under uncertainty.
-A hybrid interaction loop combines NSGA-II and RL, ensuring both long-term optimality and short-term responsive-
-ness. Experiments on large-scale real EMS datasets and OpenStreetMap road networks demonstrate that the proposed
-framework improves Pareto efficiency, reduces response time, and increases system robustness.
+The Ambulance Routing Problem (ARP) is a critical challenge in Emergency Medical Services (EMS), where minimizing response time and improving coverage are essential for saving lives. Traditional optimization methods often fail to capture the dynamic, stochastic, and priority-driven nature of real-world emergency systems. This repository implements a **Hybrid EMS Optimization Framework** combining Multi-Objective Evolutionary Optimization (NSGA-II) and Deep Q-Network (DQN)-based reinforcement learning.
 
-⚙️ Methodology
+Incident priority is derived directly from historical EMS data using a **rarity-based heuristic**: call types that occur less frequently in the data are assigned a higher priority. This priority feeds into both stages of the pipeline.
 
-The proposed framework introduces an end-to-end pipeline for EMS optimization, integrating data-driven modeling, multi-objective optimization, and DQN. As illustrated in Figure~\ref{fig:framework}, the system combines global planning with real-time decision-making.
+A Non-Dominated Sorting Genetic Algorithm II (NSGA-II) is employed **offline** to generate Pareto-optimal ambulance deployment strategies, optimizing total response time and priority-weighted response time. Its best solution then **warm-starts** a Deep Q-Network (DQN) agent, which learns an adaptive dispatch policy — choosing which ambulance to send to each incoming incident in real time. Routing itself always follows the fixed shortest path (Dijkstra) over the road network; it is not learned by the agent.
 
-* Data Preprocessing and Feature Engineering:  
-Raw EMS incident data are cleaned and transformed into structured features, including temporal attributes and priority levels derived from incident types.
+The two stages are coupled through a single, **one-directional** interaction: NSGA-II runs once, offline, and its solution initializes the DQN's state and replay buffer — there is no feedback loop back into NSGA-II. Experiments on real EMS datasets and OpenStreetMap road networks, across three scenarios of increasing scale, show that the hybrid framework improves Pareto efficiency and solution quality over standalone NSGA-II, at a small additional computational cost.
 
-* Spatial Mapping and Graph Construction:  
-The urban road network is modeled using OpenStreetMap via OSMnx, where nodes represent intersections and edges encode travel distance and time.
+## ⚙️ Methodology
 
-* Scenario Sampling: 
-Multiple demand scenarios (Small, Medium, Large) are generated to reflect varying levels of operational complexity.
+The proposed framework introduces an end-to-end pipeline for EMS optimization, integrating data preprocessing, multi-objective optimization, and DQN-based dispatch. As illustrated in Figure 1, the system combines offline global planning with online real-time decision-making.
 
-* Multi-objective Optimization (NSGA-II):  
-An offline optimization phase determines initial ambulance positioning by minimizing total response time and priority-weighted response cost, producing a set of Pareto-optimal solutions.
+* **Data Preprocessing:**
+  Raw EMS incident records are cleaned and reduced to three core fields — incident ID, incident datetime, and initial call type. Priority levels are derived from call-type frequency: rarer call types receive a higher priority score (a rarity heuristic, not a predictive model).
 
-* Deep Q-Network (DQN) Environment:  
-A simulation environment models system states including ambulance positions and incident locations for sequential decision-making.
+* **Spatial Mapping and Graph Construction:**
+  The urban road network is modeled using OpenStreetMap via OSMnx, where nodes represent intersections and edges encode travel distance and time (shortest path via Dijkstra).
 
-* DQN-based dispatch policy (DQN):  
-A Deep Q-Network learns a dispatch policy by maximizing cumulative rewards based on response efficiency.
+* **Scenario Sampling:**
+  Three demand scenarios are generated to test scalability: **Small** (20 incidents / 5 ambulances), **Medium** (100 incidents / 10 ambulances), and **Large** (200 incidents / 15 ambulances).
 
-* Hybrid Integration:  
-NSGA-II provides global optimal initialization, while RL enables adaptive real-time dispatch decisions, ensuring both exploration and responsiveness.
+* **Multi-Objective Optimization (NSGA-II):**
+  An offline optimization phase searches over full ambulance-to-incident deployment assignments, minimizing total response time and priority-weighted response time, and produces a set of Pareto-optimal solutions. The single best compromise, S\*, is selected via a normalized weighted aggregation.
 
-* Simulation and Learning:  
-A continuous interaction loop updates the RL policy through environment feedback.
+* **Deep Q-Network (DQN) Environment:**
+  A simulation environment models ambulance availability, incident arrivals, and travel times for sequential dispatch decisions. At each step, the DQN's action space is *which free ambulance to dispatch* — routing itself always follows the fixed shortest path and is never learned by the agent.
 
-* Performance Evaluation:  
-The framework is evaluated using Hypervolume, IGD, Spread, and computational runtime.
+* **DQN-Based Dispatch Policy:**
+  The DQN learns a dispatch policy by maximizing cumulative reward, where the reward penalizes long travel times on high-priority calls (r = −travel_time × priority), using ε-greedy exploration decayed over training (1.0 → 0.05).
 
-Final Outcomes:
-Experimental results demonstrate significant improvements, including reduced response times, increased operational efficiency, and better coverage of high-risk areas, while maintaining stable learning behavior.
+* **Hybrid Integration (Warm-Start):**
+  NSGA-II's best offline solution (S\*) warm-starts the DQN — it initializes the agent's state and pre-fills its replay buffer, so training does not start from scratch. This interaction is **one-shot and one-directional**: NSGA-II runs once, offline, and there is no feedback loop back into NSGA-II using the DQN's results.
 
-<img width="1005" height="1044" alt="Capture d&#39;écran 2026-04-06 112703" src="https://github.com/user-attachments/assets/e30ebe36-be44-4e06-ab42-5a1856a689e2" />
+* **Simulation and Learning:**
+  After warm-starting, the DQN continues training through repeated interaction with the simulated environment — 150 episodes of 30 steps each (4,500 steps total) — updating its policy via experience replay and a periodically-synced target network.
+
+* **Performance Evaluation:**
+  The framework is evaluated using Hypervolume (HV), Inverted Generational Distance (IGD), Spread, and computational runtime.
+
+**Final Outcomes:**
+Experimental results show consistent improvements in Pareto efficiency and solution quality over standalone NSGA-II, with the DQN component adding only a small fraction of extra runtime, and stable behavior across increasing problem scales.
+
+<img width="1500" height="908" alt="ChatGPT Image 23 août 2026, 19_07_33" src="https://github.com/user-attachments/assets/a9923f38-6b4a-4a12-b802-c5f109e60f0b" />
 
 
-📊 Experimental Results
+## 📊 Experimental Results
 
-Experiments were conducted on real EMS datasets and OpenStreetMap road networks across small, medium, and large-scale scenarios.
+Experiments were conducted on real EMS datasets and OpenStreetMap road networks across small, medium, and large-scale scenarios. NSGA-II and the Hybrid method are evaluated under the same ambulance-availability constraint (an ambulance cannot serve two requests at once), using a shared reference point per scenario.
 
 | Scenario | Method  | HV       | IGD      | Spread   | Runtime (s) |
 | -------- | ------- | -------- | -------- | -------- | ----------- |
-| Small    | NSGA-II | 0.047472 | 0.000000 | --       | 263.16      |
-| Small    | Hybrid  | 0.049845 | 0.000000 | --       | 266.76      |
-| Small    | RL      | --       | --       | --       | 3.59        |
-| Medium   | NSGA-II | 0.058565 | 0.003542 | 0.018212 | 1573.36     |
-| Medium   | Hybrid  | 0.061494 | 0.003187 | 0.018576 | 1576.65     |
-| Medium   | RL      | --       | --       | --       | 3.29        |
-| Large    | NSGA-II | 0.074215 | 0.017656 | 0.069426 | 3756.40     |
-| Large    | Hybrid  | 0.077926 | 0.015891 | 0.070814 | 3760.04     |
-| Large    | RL      | --       | --       | --       | 3.63        |
+| Small    | NSGA-II | 0.049526 | 0.525564 | –        | 208.20      |
+| Small    | Hybrid  | 0.417754 | 0.087901 | ≈0       | 219.45      |
+| Small    | RL      | –        | –        | –        | 11.25       |
+| Medium   | NSGA-II | 0.040000 | 0.927663 | –        | 1340.57     |
+| Medium   | Hybrid  | 0.829156 | 0.077305 | ≈0       | 1360.68     |
+| Medium   | RL      | –        | –        | –        | 20.11       |
+| Large    | NSGA-II | 0.055853 | 0.772827 | 0.012915 | 3155.35     |
+| Large    | Hybrid  | 0.909406 | 0.259937 | ≈0       | 3205.81     |
+| Large    | RL      | –        | –        | –        | 50.46       |
 
 The results show that the proposed hybrid approach:
 
-Improves Hypervolume (HV) compared to NSGA-II by up to +5.0%
-Achieves better Pareto convergence (lower IGD values)
-Maintains stable performance across increasing problem scales
-Provides very fast decision-making through DQN (near real-time inference)
+- Improves Hypervolume (HV) compared to NSGA-II by **8.4×** (Small), **20.7×** (Medium), and **16.3×** (Large)
+- Reduces IGD — better Pareto convergence — by **6.0×** (Small), **12.0×** (Medium), and **2.97×** (Large)
+- Keeps Spread close to zero across all scenarios, consistent with evaluating a single learned policy over several rollouts rather than a diverse population of solutions
+- Adds only **1.5–5%** extra runtime on top of NSGA-II — the DQN stage itself is very fast, so the quality gain does not come at a significant computational cost
 
 In particular:
 
-The hybrid model consistently outperforms NSGA-II in all scenarios
-RL alone achieves extremely low runtime but does not produce Pareto-optimal solutions
-The hybrid approach balances solution quality + real-time adaptability
+- The hybrid model consistently outperforms NSGA-II in all three scenarios
+- RL (DQN) alone achieves extremely low runtime (11–50 s) but does not produce Pareto-optimal solutions, since it learns a single dispatch policy rather than a set of trade-off solutions — multi-objective metrics don't apply to it directly
+- The hybrid approach combines NSGA-II's solution quality with the DQN's fast, adaptive real-time dispatch
 
+## 🚀 Key Contributions
 
-🚀 Key Contributions
-Unified integration of evolutionary optimization + deep reinforcement learning
-EMS-specific modeling of ambulances, hospitals, patient priority, and road networks
-Closed-loop interaction between global search (NSGA-II) and local policy learning (DQN)
-Scalable performance across different EMS demand levels
+- Unified integration of multi-objective evolutionary optimization (NSGA-II) and deep reinforcement learning (DQN) for ambulance dispatch
+- EMS-specific modeling of ambulances, incident priority (derived from historical call-type frequency), and real road networks (OpenStreetMap)
+- A one-shot, one-directional warm-start interaction between global offline search (NSGA-II) and online adaptive dispatch policy learning (DQN)
+- Evaluation across three EMS demand scales (Small / Medium / Large) using Hypervolume, IGD, Spread, and runtime
 
-🧠 Conclusion
+## 🧠 Conclusion
 
-The proposed framework provides a scalable, EMS-aware, and adaptive decision support system for ambulance dispatching. It significantly improves optimization quality while enabling real-time responsiveness in dynamic emergency environments.
-
+The proposed framework provides a scalable, EMS-aware decision support system for ambulance dispatching. It substantially improves Pareto efficiency and solution quality over standalone NSGA-II — most notably on the Medium and Large scenarios, where the ambulance-availability constraint makes the deployment problem most coupled — while adding only a small computational overhead, enabling real-time dispatch responsiveness in dynamic emergency environments.
